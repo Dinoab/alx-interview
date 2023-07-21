@@ -1,46 +1,39 @@
 #!/usr/bin/python3
-""" Reads stdin line by line and computes metrics """
+"""
+Log parsing
+"""
 
 import sys
 
+if __name__ == '__main__':
 
-status_code = {"200": 0,\
-               "301": 0,\
-               "400": 0,\
-               "401": 0,\
-               "403": 0,\
-               "404": 0,\
-               "405": 0,\
-               "500": 0}
-count = 1
-file_size = 0
+    filesize, count = 0, 0
+    codes = ["200", "301", "400", "401", "403", "404", "405", "500"]
+    stats = {k: 0 for k in codes}
 
-def get_size(line):
-    """ Get file size of each line """
-    try:
-        line_arr = line.split()
-        code = line_arr[-2]
-        if code in status_code.keys():
-            status_code[code] += 1
-        return int(line_arr[-1])
-    except Exception:
-        return 0
+    def print_stats(stats: dict, file_size: int) -> None:
+        print("File size: {:d}".format(filesize))
+        for k, v in sorted(stats.items()):
+            if v:
+                print("{}: {}".format(k, v))
 
-def print_metrics():
-    """ Print line metrics """
-    print("File size: {}".format(file_size))
-    for key in sorted(status_code.keys()):
-        if status_code[key]:
-            print("{}: {}".format(key, status_code[key]))
-
-if __name__ == "__main__":
     try:
         for line in sys.stdin:
-            file_size += get_size(line)
-            if count % 10 == 0:
-                print_metrics()
             count += 1
+            data = line.split()
+            try:
+                status_code = data[-2]
+                if status_code in stats:
+                    stats[status_code] += 1
+            except BaseException:
+                pass
+            try:
+                filesize += int(data[-1])
+            except BaseException:
+                pass
+            if count % 10 == 0:
+                print_stats(stats, filesize)
+        print_stats(stats, filesize)
     except KeyboardInterrupt:
-        print_metrics()
+        print_stats(stats, filesize)
         raise
-    print_metrics()
